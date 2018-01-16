@@ -20,7 +20,7 @@ namespace MongoDBDemo
 			long count = collection.Count(new BsonDocument());
 			Console.WriteLine("The database has " + count + " documents");
 
-			InsertDocument(collection);
+			//InsertDocument(collection);
 
 			ShowAllDocuments(collection);
 
@@ -28,9 +28,25 @@ namespace MongoDBDemo
 
 			ModifyAnimal(collection, "kiwi", "owl");
 
+			RemoveAnimal(collection, "owl");
+
 			ShowAllDocuments(collection);
 
+			Console.WriteLine("\nFetching animals, generically");
+			var objectCollection = db.GetCollection<Animal>("animals");
+			var allAnimals = objectCollection.Find(animal => true);
+			//Builders<Animal>.Filter
+			foreach (var animal in allAnimals.ToEnumerable())
+				Console.WriteLine("- found a " + animal.Name + " that has " + animal.Legs + " legs.");
+
 			Console.ReadLine();
+		}
+
+		private static void RemoveAnimal(IMongoCollection<BsonDocument> collection, string name)
+		{
+			var filter = Builders<BsonDocument>.Filter.Eq("name", name);
+			var result = collection.DeleteOne(filter);
+			Console.WriteLine("\nDeleted " + result.DeletedCount + " " + name);
 		}
 
 		private static void FilterExamples(IMongoCollection<BsonDocument> collection)
