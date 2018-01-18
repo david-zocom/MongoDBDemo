@@ -34,14 +34,40 @@ namespace MongoDBDemo
 
 			Console.WriteLine("\nFetching animals, generically");
 			var objectCollection = db.GetCollection<Animal>("animals");
-			var allAnimals = objectCollection.Find(animal => true);
-			//Builders<Animal>.Filter
+
+			var proj = Builders<Animal>.Projection.Include(doc => doc.Name)
+				.Include(doc => doc.Legs).Exclude(doc => doc.ID);
+			var proj2 = Builders<Animal>.Projection.Expression(doc => new
+			{
+				Name = doc.Name,
+				Legs = doc.Legs,
+				LegPairs = doc.Legs / 2
+			});
+
+			var sortByNamesAsc = Builders<Animal>.Sort.Ascending(animal => animal.Name);
+			var allAnimals = objectCollection.Find(animal => true)
+				.Project(proj2)
+				.Sort(sortByNamesAsc);
+			var filter = Builders<Animal>.Filter.Where(animal => true);
+			var allAnimals2 = objectCollection.Find(filter);
+			var allAnimals3 = objectCollection.Find("{}");
+			/*Print(allAnimals.ToEnumerable());
+			Print(allAnimals2.ToEnumerable());
+			Print(allAnimals3.ToEnumerable());*/
 			foreach (var animal in allAnimals.ToEnumerable())
-				Console.WriteLine("- found a " + animal.Name + " that has " + animal.Legs + " legs.");
+				//Console.WriteLine("- found a " + animal.Name + " that has " + animal.Legs + " legs.");
+				Console.WriteLine("- " + animal.ToString());
 
 			Console.ReadLine();
 		}
-
+		private static void Print(IEnumerable<Animal> enumerable)
+		{
+			foreach (var x in enumerable)
+				Console.WriteLine("- " + x.ToString());
+		}
+		// Program p = new Program();
+		// p.NonStatic();
+		private void NonStatic() { }
 		private static void RemoveAnimal(IMongoCollection<BsonDocument> collection, string name)
 		{
 			var filter = Builders<BsonDocument>.Filter.Eq("name", name);
